@@ -9,8 +9,8 @@
  *
  * Reference: https://en.wikipedia.org/wiki/Bfloat16_floating-point_format
  *
- * Version: 0.0
- * Tested: 2023-10-07T13:25:00+08:00
+ * Version: 0.1
+ * Tested: 2023-10-07T15:05:00+08:00
  */
 
 #ifndef ADD_SUB_BF16_C
@@ -19,16 +19,16 @@
 // uncomment the following line to test this program
 // #define ADD_SUB_BF16_TEST
 #ifdef ADD_SUB_BF16_TEST
-#include <stdio.h>  // printf
+#include <stdio.h>  // puts, printf
 #endif              // ADD_SUB_BF16_TEST
 
 #include "type_def.h"
 
 // uncomment the following line to see debugging info
-// #define DEBUG
-#ifdef DEBUG
+// #define ADD_SUB_BF16_DEBUG
+#ifdef ADD_SUB_BF16_DEBUG
 #include "print_bf16.c"  // print_bf16_binary
-#endif                   // DEBUG
+#endif                   // ADD_SUB_BF16_DEBUG
 
 /* Addition or subtraction of two bf16 numbers.
  * Returns (a + b) or (a - b), depends on whether to_add.
@@ -40,22 +40,22 @@
  * Output format: bf16
  */
 bf16 add_sub_bf16(bf16 a, bf16 b, int to_add) {
-  u32 ba = *(u32 *)&a;
-  u32 bb = *(u32 *)&b;
+  u32 ba = *(u32 *)&a; // must be unsigned
+  u32 bb = *(u32 *)&b; // must be unsigned
   u32 sa = ba & 0x80000000;
   u32 sb = bb & 0x80000000;
   i32 ea = ((ba & 0x7F800000) >> 23) - 127;
   i32 eb = ((bb & 0x7F800000) >> 23) - 127;
-  i32 ma = ((ba & 0x007F0000) >> 16) | 0x0080;
-  i32 mb = ((bb & 0x007F0000) >> 16) | 0x0080;
+  i32 ma = ((ba & 0x007F0000) >> 16) | 0x80;
+  i32 mb = ((bb & 0x007F0000) >> 16) | 0x80;
 
-#ifdef DEBUG
+#ifdef ADD_SUB_BF16_DEBUG
   printf("(a and b in addition)\n");
   printf("%1s %8s %7s\n", "s", "exp", "mantissa");
   print_bf16_binary(a);
   print_bf16_binary(b);
   puts("");
-#endif  // DEBUG
+#endif  // ADD_SUB_BF16_DEBUG
 
   u32 s = 0;  // result sign (1 = negative, 0 = positive)
   u32 e = 0;  // result exponent
@@ -103,20 +103,41 @@ bf16 add_sub_bf16(bf16 a, bf16 b, int to_add) {
     }
   }
 
+  // construct the result
   s = s << 31;
   e = (e + 127) << 23;
   m = (m & 0x7F) << 16;
   u32 r = s | e | m;
 
-#ifdef DEBUG
+#ifdef ADD_SUB_BF16_DEBUG
   printf("(addition result)\n");
   printf("%1s %8s %7s\n", "s", "exp", "mantissa");
   print_bf16_binary(*(bf16 *)&r);
   puts("");
-#endif  // DEBUG
+#endif  // ADD_SUB_BF16_DEBUG
 
   return *(bf16 *)&r;
 }
+
+/* Addition of two bf16 numbers.
+ * Returns (a + b).
+ *
+ * Input format:
+ *   a: bf16
+ *   b: bf16
+ * Output format: bf16
+ */
+bf16 add_bf16(bf16 a, bf16 b) { return add_sub_bf16(a, b, 1); }
+
+/* Subtraction of two bf16 numbers.
+ * Returns (a - b).
+ *
+ * Input format:
+ *   a: bf16
+ *   b: bf16
+ * Output format: bf16
+ */
+bf16 sub_bf16(bf16 a, bf16 b) { return add_sub_bf16(a, b, 0); }
 
 /* Test the functionalities in this unit.
  * Return 0 if successes. Otherwise, return a non-zero number,
@@ -140,21 +161,21 @@ int test_add_sub_bf16() {
   *pa = 0x3F9A0000;  // 0 01111111 0011010
   *pb = 0x40140000;  // 0 10000000 0010100
   s = 0x40610000;    // 0 10000000 1100001
-  r = add_sub_bf16(a, b, 1);
+  r = add_bf16(a, b);
   if (*pr != s) return 2;
 
   // 3: add, a > 0, b > 0, exp_a > exp_n, exp carry
   *pa = 0x40410000;  // 0 10000000 1000001
   *pb = 0x3FFF0000;  // 0 01111111 1111111
   s = 0x40A00000;    // 0 10000001 0100000
-  r = add_sub_bf16(a, b, 1);
+  r = add_bf16(a, b);
   if (*pr != s) return 3;
 
   // 4: add, a < 0, b > 0, (a + b) < 0, exp decreases
   *pa = 0xC0410000;  // 1 10000000 1000001
   *pb = 0x3FFF0000;  // 0 01111111 1111111
   s = 0xBF840000;    // 1 01111111 0000100
-  r = add_sub_bf16(a, b, 1);
+  r = add_bf16(a, b);
   if (*pr != s) return 4;
 
   // 5: sub, a = b
@@ -168,14 +189,14 @@ int test_add_sub_bf16() {
   *pa = 0x40450000;  // 0 10000000 1000101
   *pb = 0x3F7F0000;  // 0 01111110 1111111
   s = 0x40060000;    // 0 10000000 0000110
-  r = add_sub_bf16(a, b, 0);
+  r = sub_bf16(a, b);
   if (*pr != s) return 6;
 
   // 7: sub, a < 0, b > 0, exp_a < exp_b, exp carry
   *pa = 0xBFC00000;  // 1 01111111 1000000
   *pb = 0x40400000;  // 0 10000000 1000000
   s = 0xC0900000;    // 1 10000001 0010000
-  r = add_sub_bf16(a, b, 0);
+  r = sub_bf16(a, b);
   if (*pr != s) return 7;
 
   return 0;
