@@ -9,8 +9,8 @@
  *
  * Reference: https://en.wikipedia.org/wiki/Bfloat16_floating-point_format
  *
- * Version: 0.0
- * Tested: 2023-10-07T14:09:00+08:00
+ * Version: 0.1
+ * Tested: 2023-10-07T17:22:00+08:00
  */
 
 #ifndef MUL_BF16_C
@@ -25,12 +25,12 @@
 #endif              // MUL_BF16_TEST
 
 // uncomment the following line to see debugging info
-// #define DEBUG
-#ifdef DEBUG
+// #define MUL_BF16_DEBUG
+#ifdef MUL_BF16_DEBUG
 #include "print_bf16.c"
-#endif  // DEBUG
+#endif  // MUL_BF16_DEBUG
 
-/* Multiply of two bf16 numbers.
+/* Multiplication of two bf16 numbers.
  * Returns (a * b).
  *
  * Input format:
@@ -41,21 +41,25 @@
 bf16 mul_bf16(bf16 a, bf16 b) {
   u32 ba = *(u32 *)&a;
   u32 bb = *(u32 *)&b;
-  u32 sa = ba & 0x80000000;
-  u32 sb = bb & 0x80000000;
+  if (ba == 0 || bb == 0) return 0;
+
+  // extract sign, exponent and mantissa of a and b
+  u32 sa = (ba & 0x80000000) >> 31;
+  u32 sb = (bb & 0x80000000) >> 31;
   i32 ea = ((ba & 0x7F800000) >> 23) - 127;
   i32 eb = ((bb & 0x7F800000) >> 23) - 127;
-  i32 ma = ((ba & 0x007F0000) >> 16) | 0x0080;
-  i32 mb = ((bb & 0x007F0000) >> 16) | 0x0080;
+  i32 ma = ((ba & 0x007F0000) >> 16) | 0x80;
+  i32 mb = ((bb & 0x007F0000) >> 16) | 0x80;
 
-#ifdef DEBUG
+#ifdef MUL_BF16_DEBUG
   printf("(a and b in multiplication)\n");
   printf("%1s %8s %7s\n", "s", "exp", "mantissa");
   print_bf16_binary(a);
   print_bf16_binary(b);
   puts("");
-#endif  // DEBUG
+#endif  // MUL_BF16_DEBUG
 
+  // calculate the initial result
   u32 s = sa ^ sb;         // result sign (1 = negative, 0 = positive)
   u32 e = ea + eb;         // result exponent
   i32 m = (ma * mb) >> 7;  // result mantissa
@@ -69,22 +73,24 @@ bf16 mul_bf16(bf16 a, bf16 b) {
     e += 1;
   }
 
-  // handle result of 0
+  // handle result of +-0
   if (m == 0) {
-    e = -127;
+    s = s << 31;
+    return *(bf16 *)&s;
   }
 
+  // construct the result
   s = s << 31;
   e = (e + 127) << 23;
   m = (m & 0x7F) << 16;
   u32 r = s | e | m;
 
-#ifdef DEBUG
+#ifdef MUL_BF16_DEBUG
   printf("(multiplication result)\n");
   printf("%1s %8s %7s\n", "s", "exp", "mantissa");
   print_bf16_binary(*(bf16 *)&r);
   puts("");
-#endif  // DEBUG
+#endif  // MUL_BF16_DEBUG
 
   return *(bf16 *)&r;
 }
@@ -117,9 +123,16 @@ int test_mul_bf16() {
   // 3: a < 0, b > 0, mantissa carries
   *pa = 0xBF400000;  // 1 01111110 1000000
   *pb = 0x40B00000;  // 0 10000001 0110000
-  s = 0x40840000;    // 0 10000001 0000100
+  s = 0xC0840000;    // 1 10000001 0000100
   r = mul_bf16(a, b);
   if (*pr != s) return 3;
+
+  // 4: a = 4, b = 0
+  *pa = 0x40800000;  // 0 10000001 0000000
+  *pb = 0;           // 0 00000000 0000000
+  s = 0;             // 0 00000000 0000000
+  r = mul_bf16(a, b);
+  if (*pr != s) return 4;
 
   return 0;
 }
