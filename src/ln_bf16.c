@@ -2,8 +2,8 @@
  * This program implements and tests the following functionality:
  *   Natural logarithm of fp32 and bf16 numbers.
  *
- * Version: 0.0
- * Tested: 2023-10-07T17:48:00+08:00
+ * Version: 0.1
+ * Tested: 2023-10-07T22:33:00+08:00
  */
 
 #ifndef LN_BF16_C
@@ -36,6 +36,12 @@
  */
 float ln_fp32(float x) {
   unsigned int *px = (unsigned int *)&x;
+
+  // catch zero
+  if (*px == 0) {
+    *px = 0xFF800000;
+    return *(bf16 *)px;
+  }
 
   // discard x's sign
   *px &= 0x7FFFFFFF;
@@ -77,6 +83,12 @@ bf16 ln_bf16(bf16 x) {
 
   u32 *px = (u32 *)&x;
   bf16 exp = i32_to_bf16(((*px & 0x7F800000) >> 23) - 127);
+
+  // catch zero
+  if (*px == 0) {
+    *px = 0xFF800000;
+    return *(bf16 *)px;
+  }
 
   // set x's exponent to 0, which is 127 after normalization.
   *px = 0x3F800000 | (*px & 0x7F0000);
