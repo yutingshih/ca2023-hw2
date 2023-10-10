@@ -4,6 +4,9 @@
 # For including as a library, include only codes in
 # the "Library" section.
 #
+# Library dependency graph:
+#   **add_sub_bf16** -> ln_bf16
+#
 # Version: 0.1.0
 # Tested: 2023-10-09T11:32:00+08:00
 

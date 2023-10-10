@@ -2,6 +2,12 @@
 #
 # The average runtime of `mul_shift_u32` is O(n lg n).
 #
+# For including as a library, include only codes in
+# the "Library" section.
+#
+# Library dependency graph:
+#   **mul_shift_u32** -> mul_bf16
+#
 # Version: 0.0.0
 # Tested: 2023-10-03T10:31:00+08:00
 
@@ -50,7 +56,7 @@ mul_shift_u32:
         addi t0, zero, 0 # t0 = result
     mhu_loop:
         beq  a1, zero, mhu_epilogue
-        andi t2, a1, 1          # the least significant bit of a1
+        andi t2, a1, 1 # the least significant bit of a1
         beq  t2, zero, mhu_next
         add  t0, t0, a0
     mhu_next:

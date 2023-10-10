@@ -4,6 +4,9 @@
 # For including as a library, include only codes in
 # the "Library" section.
 #
+# Library dependency graph:
+#   **i32_bf16** -> ln_bf16
+#
 # Version: 0.0.0
 # Tested: 2023-10-09T10:33:00+08:00
 
