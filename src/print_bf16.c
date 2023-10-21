@@ -16,7 +16,7 @@
 void print_bf16_hex_dec(bf16 x) {
   char buffer[11] = {0};
   sprintf(buffer, "%08x", *(int *)&x);
-  strnset(buffer + 4, 0, 4 * sizeof(char));
+  memset(buffer + 4, 0, 4 * sizeof(char));
   printf("%s %.6f\n", buffer, x);
 }
 
