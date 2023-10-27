@@ -5,6 +5,7 @@
 # Tested: 2023-10-03T10:19:00+08:00
 
 .text
+.globl main
 main:
         # multiply two numbers
         li  a0, 6

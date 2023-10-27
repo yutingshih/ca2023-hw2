@@ -1,6 +1,6 @@
 # This program implements and tests multiplication
 # of bf16 numbers.
-# 
+#
 # For including as a library, include only codes in…
 # (1) the "Required Library" sections, and
 # (2) the "Library" section.
@@ -17,10 +17,11 @@
 # |                     Testing Suite                     |
 # └-------------------------------------------------------┘
 
+.globl main
 main:
     # test all functionalities
     jal  ra, mul_bf16_test
-    
+
     # print result
     li   a7, 1 # to print integer
     ecall    # a0 = 0 for success, or non-zero for index of failed test
@@ -38,7 +39,7 @@ main:
     #                   otherwise, index of the first failed test
 mul_bf16_test:
     mbt_prologue:
-        addi sp, sp -4
+        addi sp, sp, -4
         sw   ra, 0(sp)
     mbt_t1:
         li   a0, 0x3F800000

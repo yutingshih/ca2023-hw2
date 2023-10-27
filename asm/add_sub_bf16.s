@@ -1,6 +1,6 @@
 # This program implements and tests bf16 additions
 # and subtraction.
-# 
+#
 # For including as a library, include only codes in
 # the "Library" section.
 #
@@ -16,10 +16,11 @@
 # |                     Testing Suite                     |
 # └-------------------------------------------------------┘
 
+.globl main
 main:
     # test all functionalities
     jal  ra, add_sub_bf16_test
-    
+
     # print result
     li   a7, 1 # to print integer
     ecall    # a0 = 0 for success, or non-zero for index of failed test
@@ -37,7 +38,7 @@ main:
     #                   otherwise, index of the first failed test
 add_sub_bf16_test:
     asbt_prologue:
-        addi sp, sp -4
+        addi sp, sp, -4
         sw   ra, 0(sp)
     asbt_t1:
         li   a0, 0x3F9A0000

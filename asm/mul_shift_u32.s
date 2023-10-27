@@ -16,6 +16,7 @@ arg1: .word   1000
 arg2: .word   1000
 
 .text
+.globl main
 main:
     # multiply two numbers
     lw   a0, arg1
