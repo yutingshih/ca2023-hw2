@@ -3,3 +3,5 @@
 
 # compiled program
 *.exe
+*.elf
+*.o
