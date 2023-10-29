@@ -21,14 +21,15 @@
 main:
     # test all functionalities
     jal  ra, i32_bf16_test
+    # returns a0 = 0 for success, or non-zero for index of failed test
 
     # print result
-    li   a7, 1 # to print integer
-    ecall    # a0 = 0 for success, or non-zero for index of failed test
+    jal ra, print_int
+    li a0, '\n'
+    jal ra, print_char
 
     # exit program
-    li   a7, 10
-    ecall
+    j exit
 
 
 # --- i32_bf16_test ---

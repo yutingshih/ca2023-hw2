@@ -13,12 +13,12 @@ main:
         jal ra, mul_sum_u32
 
         # print result
-        li a7, 1 # to print integer
-        ecall    # a0 = result of mul_sum_u32
+        jal ra, print_int
+        li a0, '\n'
+        jal ra, print_char
 
         # exit program
-        li a7, 10
-        ecall
+        j exit
 
 # --- mul_sum_u32 ---
 # a0 = a0 * a1 with summing a1 times of a0
